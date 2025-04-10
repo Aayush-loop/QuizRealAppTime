@@ -2,9 +2,12 @@ import React, { useState, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
-import UserLandingHome from '../components/UserLandingHome';
-import Quiz from './Quiz';
-import Result from '../components/Result';
+import { AdminLandingHome } from '../components/AdminLandingHome';
+
+
+//import { AuthContext } from '../contexts/AuthContext';
+
+
 
 // const handleUpdate = (data) => {
 //     // console.log(data)
@@ -22,7 +25,7 @@ const handleTabChange = (tab) => {
 };
 
 
-const UserDashboard = () => {
+const AdminDashboard = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const [activeTab, setActiveTab] = useState('home');
@@ -201,18 +204,19 @@ const UserDashboard = () => {
                     <main className="p-4 md:ml-64 h-auto min-h-screen pt-20">
                         {
                             activeTab === 'home' && (
-                                <UserLandingHome />
+                                <AdminLandingHome />
+
                             )
                         }
 
                         {
                             activeTab === 'quiz' && <div>
-                                <Quiz />
+                                dhgjhdgfjghjgf
                             </div>
                         }
                         {
                             activeTab === 'result' && <div>
-                                <Result />
+                                dfhdgfjghjdsgf
                             </div>
                         }
                         {
@@ -229,5 +233,5 @@ const UserDashboard = () => {
     )
 }
 
-export default UserDashboard
+export default AdminDashboard
 

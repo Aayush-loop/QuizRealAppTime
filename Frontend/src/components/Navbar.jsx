@@ -1,12 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { DarkThemeToggle } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
 
 const Navbar = () => {
     const navigate = useNavigate();
+    const { isAuthenticated, user } = useContext(AuthContext);
     const [isCollapsed, setIsCollapsed] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState(null);
+
     const toggleCollapse = () => {
         setIsCollapsed(!isCollapsed);
     };
