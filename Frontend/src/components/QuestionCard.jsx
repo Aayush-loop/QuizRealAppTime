@@ -1,6 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Bookmark } from 'lucide-react';
 
 const QuestionCard = () => {
+    const [seconds, setSeconds] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setSeconds(prev => prev + 1);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    const formatTime = (totalSeconds) => {
+        const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const secs = String(totalSeconds % 60).padStart(2, '0');
+        return `${mins}:${secs}`;
+    };
+
     return (
         <div className="p-6 bg-white rounded-lg border dark:bg-gray-800">
 
@@ -8,16 +25,24 @@ const QuestionCard = () => {
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                     QUESTION NO. 1
                 </span>
-                <div className="flex items-center gap-3">
+
+                <div className="flex items-center gap-4">
+
+                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                        ⏱ {formatTime(seconds)}
+                    </div>
+
                     <span className="text-xs font-medium bg-gray-100 text-gray-800 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
                         MARKS WEIGHT: <span className="font-bold">1</span>
                     </span>
+
                     <button
                         title="Bookmark"
                         className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
                     >
-                        🔖
+                        <Bookmark />
                     </button>
+
                     <button
                         title="More options"
                         className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
@@ -31,9 +56,9 @@ const QuestionCard = () => {
                 Orange is
             </p>
 
-            {/* Options */}
+
             <div className="grid gap-4 mb-4 grid-cols-2">
-                {/* Option A - Correct */}
+
                 <div className="col-span-2 sm:col-span-1">
                     <div className="flex items-center ps-4 border border-gray-200 rounded-lg bg-green-50 dark:border-gray-700">
                         <input
@@ -51,7 +76,6 @@ const QuestionCard = () => {
                         </label>
                     </div>
                 </div>
-
 
                 <div className="col-span-2 sm:col-span-1">
                     <div className="flex items-center ps-4 border border-gray-200 rounded-lg bg-red-100 dark:border-gray-700">
@@ -71,7 +95,6 @@ const QuestionCard = () => {
                         </label>
                     </div>
                 </div>
-
                 <div className="col-span-2 sm:col-span-1">
                     <div className="flex items-center ps-4 border border-gray-200 rounded-lg dark:border-gray-700">
                         <input
@@ -89,7 +112,6 @@ const QuestionCard = () => {
                         </label>
                     </div>
                 </div>
-
 
                 <div className="col-span-2 sm:col-span-1">
                     <div className="flex items-center ps-4 border border-gray-200 rounded-lg dark:border-gray-700">

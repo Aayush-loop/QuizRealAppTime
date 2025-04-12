@@ -1,7 +1,9 @@
 import React from 'react';
 import { Calendar, Users, BarChart2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const QuizInformation = ({ title, date, attempts, passRate, status }) => {
+    const navigate = useNavigate();
     return (
         <div className="border rounded-lg px-6 py-4 bg-white dark:bg-gray-800 dark:border-gray-700 w-full">
             <div className="flex flex-col gap-4  w-full">
@@ -31,12 +33,13 @@ const QuizInformation = ({ title, date, attempts, passRate, status }) => {
                             <span>{passRate}% Passed</span>
                         </div>
                     </div>
-                    <a
+                    <button
                         href="#"
                         className="text-blue-600 font-medium hover:underline whitespace-nowrap"
+                        onClick={() => navigate('/result-analysis')}
                     >
                         View Full Statistics
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>

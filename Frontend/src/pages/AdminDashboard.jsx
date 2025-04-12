@@ -4,20 +4,6 @@ import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
 import { AdminLandingHome } from '../components/AdminLandingHome';
 
-
-//import { AuthContext } from '../contexts/AuthContext';
-
-
-
-// const handleUpdate = (data) => {
-//     // console.log(data)
-//     setUser({
-//         name: data.name,
-//         email: data.email,
-//         image: `${data.image || '/images/avatar.png'}`
-//     })
-// }
-
 const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (!isSidebarOpen) return;
@@ -29,7 +15,6 @@ const AdminDashboard = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const [activeTab, setActiveTab] = useState('home');
-    //const [user, setUser] = useState(useContext(AuthContext).user);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
 
