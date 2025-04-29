@@ -5,13 +5,11 @@ const apiError = require('../utils/apiError');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
 
 const registerUser = async (req, res) => {
-
-    //res.send("request received for register user");
     try {
-        const { name, email, password, role } = req.body;
+        const { name, phone, email, password, role } = req.body;
 
 
-        if ([name, email, password, role].some((field) => {
+        if ([name, phone, email, password, role].some((field) => {
             return !field || field.trim() === ""
         })) {
             throw new apiError(400, "All the fields are required")
@@ -21,17 +19,11 @@ const registerUser = async (req, res) => {
         if (isUserAlreadyExists) {
             throw new apiError(400, "User already exists")
         }
-        const image = req.file.path;
-        if (!image) {
-            throw new apiError(400, "Image is required")
-        }
-        const imageUrl = await uploadFileToCloudinary(image);
-        if (!imageUrl) {
-            throw new apiError(400, "Image upload failed")
-        }
+        const imageUrl = req.file ? await uploadFileToCloudinary(req.file.path) : null;
 
         const user = await User.create({
             name,
+            phone,
             email,
             password,
             role,
@@ -57,8 +49,6 @@ const registerUser = async (req, res) => {
 
 
 const loginUser = async (req, res) => {
-    //console.log("request received for login user");
-    //res.send("request received for login user");
     try {
         const { email, password } = req.body;
 
@@ -72,8 +62,6 @@ const loginUser = async (req, res) => {
         if (!user) {
             throw new apiError(400, "Invalid credentials")
         }
-
-        //console.log(user, typeof (user))
 
         const isPasswordMatched = await user.isPasswordMatched(password);
         if (!isPasswordMatched) {
@@ -91,8 +79,8 @@ const loginUser = async (req, res) => {
         }
 
         res.status(200)
-            .cookie('accessToken', accessToken, { httpOnly: true, secure: true })
-            .cookie('refreshToken', refreshToken, { httpOnly: true, secure: true })
+            .cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'None' })
+            .cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'None' })
             .json(new apiResponse(200, "User logged in successfully", {
                 id: user._id,
                 name: user.name,
@@ -114,8 +102,6 @@ const loginUser = async (req, res) => {
 const logoutuser = async (req, res) => {
 
     try {
-
-
         const { id } = req.user;
         const user = await User.findById(id);
         if (!user) {
@@ -144,7 +130,6 @@ const logoutuser = async (req, res) => {
     }
 
 }
-
 
 module.exports = {
     registerUser,

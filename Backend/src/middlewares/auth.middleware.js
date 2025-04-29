@@ -59,24 +59,8 @@ const checkLogin = async (req, res, next) => {
     }
 }
 
-const checkSuperAdmin = (req, res, next) => {
-    try {
-        if (req.user.role !== 'superAdmin') {
-            return res.status(403).json(new apiResponse(403, "Only Superadmin can create user and admin", null));
-        }
-        next();
-
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: error.message,
-            success: false,
-        });
-    }
-}
 
 module.exports = {
     checkLogin,
-    checkSuperAdmin
 }
 
