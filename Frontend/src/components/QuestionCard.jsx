@@ -1,138 +1,103 @@
 import React, { useEffect, useState } from 'react';
 import { Bookmark } from 'lucide-react';
+import API from '../utils/API';
+import Loading from './Loading';
+import { io } from "socket.io-client";
+const socket = io("http://localhost:3000");
 
 const QuestionCard = () => {
-    const [seconds, setSeconds] = useState(0);
+    // const [question, setQuestion] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    // const [seconds, setSeconds] = useState(0);
+
+    // useEffect(() => {
+    //     const timer = setInterval(() => {
+    //         setSeconds(prev => prev + 1);
+    //     }, 1000);
+
+    //     return () => clearInterval(timer);
+    // }, []);
+
+    // const formatTime = (totalSeconds) => {
+    //     const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    //     const secs = String(totalSeconds % 60).padStart(2, '0');
+    //     return `${mins}:${secs}`;
+    // };
+    const [question, setQuestion] = useState(null);
 
     useEffect(() => {
-        const timer = setInterval(() => {
-            setSeconds(prev => prev + 1);
-        }, 1000);
+        socket.on("update-question", (data) => {
+            console.log("Received question from admin:", data);
+            setQuestion(data.question);
+        });
 
-        return () => clearInterval(timer);
+        return () => {
+            socket.off("admin-question-change");
+        };
     }, []);
 
-    const formatTime = (totalSeconds) => {
-        const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-        const secs = String(totalSeconds % 60).padStart(2, '0');
-        return `${mins}:${secs}`;
-    };
-
-    return (
-        <div className="p-6 bg-white rounded-lg border dark:bg-gray-800">
-
-            <div className="flex justify-between items-start mb-4">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    QUESTION NO. 1
-                </span>
-
-                <div className="flex items-center gap-4">
-
-                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                        ⏱ {formatTime(seconds)}
-                    </div>
-
-                    <span className="text-xs font-medium bg-gray-100 text-gray-800 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
-                        MARKS WEIGHT: <span className="font-bold">1</span>
-                    </span>
-
-                    <button
-                        title="Bookmark"
-                        className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
-                    >
-                        <Bookmark />
-                    </button>
-
-                    <button
-                        title="More options"
-                        className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
-                    >
-                        ⋮
-                    </button>
-                </div>
-            </div>
-
-            <p className="text-lg font-semibold mb-4 dark:text-white">
-                Orange is
-            </p>
 
 
-            <div className="grid gap-4 mb-4 grid-cols-2">
 
-                <div className="col-span-2 sm:col-span-1">
-                    <div className="flex items-center ps-4 border border-gray-200 rounded-lg bg-green-50 dark:border-gray-700">
-                        <input
-                            id="option-a"
-                            type="checkbox"
-                            name="option-a"
-                            disabled
-                            className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <label
-                            htmlFor="option-a"
-                            className="w-full py-4 ms-2 text-base font-medium text-gray-900 dark:text-gray-300"
-                        >
-                            Fruit
-                        </label>
-                    </div>
-                </div>
+    return isLoading ? (
+        <Loading />
+    ) : (
+        // <div className="p-6 bg-white rounded-lg border dark:bg-gray-800">
+        //     <div className="flex justify-between items-start mb-4">
+        //         <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+        //             QUESTION NO. {questionIndex + 1}
+        //         </span>
 
-                <div className="col-span-2 sm:col-span-1">
-                    <div className="flex items-center ps-4 border border-gray-200 rounded-lg bg-red-100 dark:border-gray-700">
-                        <input
-                            id="option-b"
-                            type="checkbox"
-                            name="option-b"
-                            defaultChecked
-                            disabled
-                            className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <label
-                            htmlFor="option-b"
-                            className="w-full py-4 ms-2 text-base font-medium text-gray-900 dark:text-gray-300"
-                        >
-                            Colour
-                        </label>
-                    </div>
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                    <div className="flex items-center ps-4 border border-gray-200 rounded-lg dark:border-gray-700">
-                        <input
-                            id="option-c"
-                            type="checkbox"
-                            name="option-c"
-                            disabled
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <label
-                            htmlFor="option-c"
-                            className="w-full py-4 ms-2 text-base font-medium text-gray-900 dark:text-gray-300"
-                        >
-                            None
-                        </label>
-                    </div>
-                </div>
+        //         <div className="flex items-center gap-4">
+        //             <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+        //                 {/* ⏱ {formatTime(seconds)} */} 5:00
+        //             </div>
 
-                <div className="col-span-2 sm:col-span-1">
-                    <div className="flex items-center ps-4 border border-gray-200 rounded-lg dark:border-gray-700">
-                        <input
-                            id="option-d"
-                            type="checkbox"
-                            name="option-d"
-                            disabled
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <label
-                            htmlFor="option-d"
-                            className="w-full py-4 ms-2 text-base font-medium text-gray-900 dark:text-gray-300"
-                        >
-                            Both A and B
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
+        //             <span className="text-xs font-medium bg-gray-100 text-gray-800 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
+        //                 MARKS WEIGHT: <span className="font-bold">{question?.marks}</span>
+        //             </span>
+
+        //             <button title="Bookmark" className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
+        //                 <Bookmark />
+        //             </button>
+
+        //             <button title="More options" className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
+        //                 ⋮
+        //             </button>
+        //         </div>
+        //     </div>
+
+        //     <p className="text-lg font-semibold mb-4 dark:text-white">
+        //         {question?.question}
+        //     </p>
+        //     <div className="grid gap-4 mb-4 grid-cols-2">
+        //         {question?.options?.map((opt, index) => (
+        //             <div className="col-span-2 sm:col-span-1" key={index}>
+        //                 <div className="flex items-center ps-4 border border-gray-200 rounded-lg dark:border-gray-700">
+        //                     <input
+        //                         id={`option-${index}`}
+        //                         type="checkbox"
+        //                         name={`option-${index}`}
+        //                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+        //                     />
+        //                     <label
+        //                         htmlFor={`option-${index}`}
+        //                         className="w-full py-4 ms-2 text-base font-medium text-gray-900 dark:text-gray-300"
+        //                     >
+        //                         {opt.option}
+        //                     </label>
+        //                 </div>
+        //             </div>
+        //         ))}
+        //     </div>
+
+
+        // </div>
+        <>
+            Hello
+        </>
     );
-};
+}
+
 
 export default QuestionCard;

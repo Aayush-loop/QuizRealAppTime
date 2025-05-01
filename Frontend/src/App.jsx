@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import Registration from './pages/Registration'
 import ResultAnalysis from './components/ResultAnalysis'
 import Playground from './components/Playground'
+import AdminQuizController from './components/AdminQuizController'
 
 const App = () => {
   return (
@@ -38,6 +39,7 @@ const App = () => {
             {/* <Route path='/quiz/' element={<Quiz />} /> */}
             <Route path='result-analysis' element={<ResultAnalysis />} />
             <Route path='/playground' element={<Playground />} />
+            <Route path='/admin-quiz-controller' element={<AdminQuizController />} />
           </Routes>
 
           <ToastContainer />
