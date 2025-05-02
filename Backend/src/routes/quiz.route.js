@@ -1,8 +1,10 @@
 const router = require('express').Router();
-const { addQuiz } = require('../controllers/quiz.controller');
+const { addQuiz, addQuestion, getQuizById, getQuestion } = require('../controllers/quiz.controller');
 const upload = require('../middlewares/multer.middleware');
 
-router.post('/quiz', upload.single('bannerImage'), addQuiz);
-router.patch('/quiz/:quizId', upload.single('bannerImage'), addQuiz);
+router.post('/add', upload.single('bannerImage'), addQuiz);
+router.patch('/add/:quizId', upload.array('images'), addQuestion);
+router.get('/:quizId', getQuizById);
+router.get('/:quizId/question', getQuestion);
 
 module.exports = router;

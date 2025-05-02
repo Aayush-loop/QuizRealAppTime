@@ -41,14 +41,14 @@ const quizSchema = new mongoose.Schema({
     },
     bannerImage: {
         type: String,
-        required: true,
+        required: false,
     },
     questions: {
         type: [questionAnswerSchema],
         required: false,
     },
 
-}, { timestamps: true });
+});
 
 const Quiz = mongoose.model('Quiz', quizSchema);
 module.exports = Quiz;
