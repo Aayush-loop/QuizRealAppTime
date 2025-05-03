@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, Users, BarChart2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const QuizInformation = ({ title, date, attempts, passRate, status }) => {
+const QuizInformation = ({ title, date, attempts, passRate, status, quizId }) => {
     const navigate = useNavigate();
     return (
         <div className="border rounded-lg px-6 py-4 bg-white dark:bg-gray-800 dark:border-gray-700 w-full">
@@ -14,7 +14,7 @@ const QuizInformation = ({ title, date, attempts, passRate, status }) => {
                     </h3>
 
                     {
-                        (status === 'Completed') ? <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">Upcoming</span> : <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Completed</span>
+                        (status === 'Upcoming') ? <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">Upcoming</span> : <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Completed</span>
                     }
                 </div>
 
@@ -35,10 +35,10 @@ const QuizInformation = ({ title, date, attempts, passRate, status }) => {
                     </div>
                     <button
                         href="#"
-                        className="text-blue-600 font-medium hover:underline whitespace-nowrap"
-                        onClick={() => navigate('/result-analysis')}
+                        className="text-blue-600 font-medium hover:underline whitespace-nowrap cursor-pointer"
+                        onClick={() => navigate(`/start-quiz/${quizId}`)}
                     >
-                        View Full Statistics
+                        Start
                     </button>
                 </div>
             </div>
