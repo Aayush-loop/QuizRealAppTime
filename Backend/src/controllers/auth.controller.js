@@ -20,7 +20,7 @@ const registerUser = async (req, res) => {
             throw new apiError(400, "User already exists")
         }
         const imageUrl = req.file ? await uploadFileToCloudinary(req.file.path) : null;
-//making a user
+
         const user = await User.create({
             name,
             phone,
@@ -47,7 +47,7 @@ const registerUser = async (req, res) => {
     }
 }
 
-//logging in user
+
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -98,7 +98,7 @@ const loginUser = async (req, res) => {
     }
 
 }
-//logoutuser
+
 const logoutuser = async (req, res) => {
 
     try {

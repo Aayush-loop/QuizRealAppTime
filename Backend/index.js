@@ -12,7 +12,7 @@ const server = http.createServer(app);
 const io = socketIO(server, {
     cors: {
         origin: ['http://localhost:5173'],
-        methods: ['GET', 'POST'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         credentials: true,
     },
 });
@@ -26,13 +26,13 @@ app.use(cookieParser());
 app.use(cors({
     origin: ['http://localhost:5173'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 }));
+
 
 // Routes
 const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/auth.route');
-
 const quizRoutes = require('./src/routes/quiz.route');
 
 app.get('/api/v1', (req, res) => {
@@ -42,10 +42,9 @@ app.get('/api/v1', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/quiz', quizRoutes);
 
-require('./src/sockets/socket')(io);
+// require('./src/sockets/socket')(io);
 const PORT = process.env.PORT || 5000;
-
 server.listen(PORT, () => {
     connectDB();
-    console.log(`Server is currently running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
