@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
 import { AdminLandingHome } from '../components/AdminLandingHome';
+import AddQuiz from './AddQuestion';
 
 const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -12,8 +12,6 @@ const handleTabChange = (tab) => {
 
 
 const AdminDashboard = () => {
-    const navigate = useNavigate()
-    const location = useLocation()
     const [activeTab, setActiveTab] = useState('home');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
@@ -196,7 +194,7 @@ const AdminDashboard = () => {
 
                         {
                             activeTab === 'quiz' && <div>
-                                dhgjhdgfjghjgf
+                                <AddQuiz />
                             </div>
                         }
                         {
