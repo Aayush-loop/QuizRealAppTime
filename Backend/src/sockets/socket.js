@@ -6,7 +6,7 @@ module.exports = (io) => {
 
         socket.on('admin-question-change', (question) => {
             // Broadcast to all students (except admin)
-            console.log('Admin changed question:', question);
+            // console.log('Admin changed question:', question);
             socket.broadcast.emit('update-question', question);
         });
 
