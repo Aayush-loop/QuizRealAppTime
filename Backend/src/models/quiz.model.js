@@ -27,10 +27,10 @@ const quizSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    duration: {
-        type: Number,
-        required: true,
-    },
+    // duration: {
+    //     type: Number,
+    //     required: true,
+    // },
     numberOfQuestions: {
         type: Number,
         required: true,
