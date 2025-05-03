@@ -6,9 +6,9 @@ const objectIdRegex = /^[a-fA-F0-9]{24}$/;
 
 const addQuiz = async (req, res) => {
     try {
-        const { title, description, date, time, fullMarks, passMarks, duration, numberOfQuestions, topic } = req.body;
+        const { title, description, date, time, fullMarks, passMarks, numberOfQuestions, topic } = req.body;
 
-        if ([title, description, date, time, fullMarks, passMarks, duration, numberOfQuestions, topic].some((field) => {
+        if ([title, description, date, time, fullMarks, passMarks, numberOfQuestions, topic].some((field) => {
             return !field || field.trim() === ""
         })) {
             throw new apiError(400, "All the fields are required")
@@ -21,7 +21,6 @@ const addQuiz = async (req, res) => {
             time,
             fullMarks,
             passMarks,
-            duration,
             numberOfQuestions,
             topic,
             bannerImage: req.file ? await uploadFileToCloudinary(req.file.path) : null
@@ -40,61 +39,72 @@ const addQuiz = async (req, res) => {
 }
 
 const addQuestion = async (req, res) => {
+
     try {
         const quizId = req.params.quizId;
-        // console.log(quizId);
 
         if (!quizId || !objectIdRegex.test(quizId)) {
-            throw new apiError(400, "Invalid or Missing Quiz ID");
-        }
-
-        let { questions } = req.body;
-        if (!questions) {
-            throw new apiError(400, "Questions are required");
-        }
-
-        questions = JSON.parse(questions);
-
-        if (!Array.isArray(questions) || questions.length === 0) {
-            throw new apiError(400, "Questions should be a non-empty array");
+            throw new apiError(400, "Invalid or missing Quiz ID");
         }
 
         const quiz = await Quiz.findById(quizId);
         if (!quiz) {
             throw new apiError(404, "Quiz not found");
         }
+        let { question, marks, difficulty, options } = req.body;
 
-        if (quiz.questions.length >= quiz.numberOfQuestions) {
-            throw new apiError(400, "Quiz already has maximum number of questions");
+        if ([question, marks, difficulty, options].some((f) => !f || f === '')) {
+            throw new apiError(400, "All fields are required");
+        }
+        if (!Array.isArray(options)) {
+            throw new apiError(400, "Options must be an array");
+        }
+        if (options.length < 2) {
+            throw new apiError(400, "At least two options are required");
+        }
+        if (options.length > 4) {
+            throw new apiError(400, "Maximum four options are allowed");
+        }
+        if (options.some((opt) => !opt.option || opt.option.trim() === '')) {
+            throw new apiError(400, "All options must have text");
+        }
+        if (!options.some((opt) => opt.isCorrect == 'true')) { //since iscorrect is a string in the request body
+            throw new apiError(400, "At least one correct option is required");
         }
 
-        const files = req.files || [];
 
-        const questionPromises = questions.map(async (question, index) => {
-            const { question: questionText, options, difficulty, marks } = question;
+        const image = req.file ? await uploadFileToCloudinary(req.file.path) : null;
 
-            if ([questionText, options, difficulty, marks].some((field) => !field || field === "")) {
-                throw new apiError(400, "All the fields are required");
-            }
-
-            const imageFile = files[index];
-            const imageUrl = imageFile ? await uploadFileToCloudinary(imageFile.path) : null;
-
-            return {
-                question: questionText,
-                options,
-                difficulty,
-                marks,
-                image: imageUrl,
-            };
-        });
-
-        const questionAnswers = await Promise.all(questionPromises);
-
-        quiz.questions.push(...questionAnswers);
+        const newQuestion = {
+            question,
+            marks,
+            difficulty,
+            options: options.map((opt) => ({
+                option: opt.option,
+                isCorrect: opt.isCorrect
+            })),
+            image
+        };
+        console.log("New question:", newQuestion);
+        quiz.questions.push(newQuestion);
         await quiz.save();
 
-        res.status(201).json(new apiResponse(201, "Questions added successfully", quiz));
+        res.status(201).json(new apiResponse(201, "Question added successfully", quiz.questions.at(-1)));
+    } catch (error) {
+        console.error("Add question error:", error);
+        res.status(500).json({
+            message: error.message || "Internal Server Error",
+            success: false
+        });
+    }
+};
+
+
+const getQuizzes = async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0]; // "2025-05-02"
+        const quizzes = await Quiz.find({ date: { $gt: today } }).populate('topic').select('-questions').sort({ createdAt: -1 });
+        res.status(200).json(new apiResponse(200, "Quizzes fetched successfully", quizzes));
     } catch (error) {
         console.log(error);
         res.status(500).json({
@@ -102,7 +112,7 @@ const addQuestion = async (req, res) => {
             success: false,
         });
     }
-};
+}
 
 const getQuizById = async (req, res) => {
     try {
@@ -132,42 +142,52 @@ const getQuestion = async (req, res) => {
     try {
         const quizId = req.params.quizId;
         const { questionIndex } = req.query;
+
         if (!quizId || !objectIdRegex.test(quizId)) {
-            throw new apiError(400, "Invalid or Missing Quiz ID");
-        }
-        if (!questionIndex || isNaN(questionIndex)) {
-            throw new apiError(400, "Invalid or Missing Question Index");
+            throw new apiError(400, "Invalid or missing Quiz ID");
         }
 
-        const quiz = await Quiz.findById(quizId).populate('questions.question').populate('topic');
+        const quiz = await Quiz.findById(quizId).populate('topic');
         if (!quiz) {
             throw new apiError(404, "Quiz not found");
         }
-        if (questionIndex < 0 || questionIndex >= quiz.questions.length) {
+
+        if (questionIndex === undefined) {
+            return res.status(200).json(new apiResponse(200, "All questions fetched successfully", {
+                questions: quiz.questions,
+                length: quiz.questions.length,
+            }));
+        }
+
+
+        const index = Number(questionIndex);
+        if (isNaN(index)) {
+            throw new apiError(400, "Question index must be a number");
+        }
+        if (index < 0 || index >= quiz.questions.length) {
             throw new apiError(400, "Question index out of bounds");
         }
-        const question = quiz.questions[questionIndex];
-        if (!question) {
-            throw new apiError(404, "Question not found");
-        }
+
+        const question = quiz.questions[index];
         res.status(200).json(new apiResponse(200, "Question fetched successfully", {
             question,
             length: quiz.questions.length,
         }));
 
     } catch (error) {
-        console.log(error);
+        console.error("Error fetching question:", error);
         res.status(500).json({
-            message: error.message,
+            message: error.message || "Internal Server Error",
             success: false,
         });
-
     }
-}
+};
+
 
 module.exports = {
     addQuiz,
     addQuestion,
     getQuizById,
-    getQuestion
+    getQuestion,
+    getQuizzes,
 }
