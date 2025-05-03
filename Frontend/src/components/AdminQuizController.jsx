@@ -3,11 +3,14 @@ import { io } from "socket.io-client";
 import { Bookmark } from 'lucide-react'
 import API from '../utils/API';
 import Loading from './Loading';
+import { useParams } from 'react-router-dom';
+
 
 const socket = io("http://localhost:3000");  //later use .env
 
 
 const AdminQuizController = () => {
+    const quizId = useParams().quizId;
     const [question, setQuestion] = useState(null);
     const [questionIndex, setQuestionIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +19,7 @@ const AdminQuizController = () => {
     const fetchAndBroadcastQuestion = async (newIndex) => {
         try {
             setIsLoading(true);
-            const response = await API.get(`/quiz/6810f0d0ba67e119fe976c1f/question?questionIndex=${newIndex}`);
+            const response = await API.get(`/quiz/${quizId}/question?questionIndex=${newIndex}`);
             if (response.status === 200) {
                 const questionData = response.data.data;
                 // console.log(questionData);
@@ -159,6 +162,18 @@ const AdminQuizController = () => {
                                         </ul>
                                     </div>
                                 </nav>
+
+                                <hr class="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
+
+                                <div className="flex items-center justify-star">
+                                    <button type="button" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+                                        onClick={() => {
+                                            socket.emit('endQuiz', { quizId });
+                                            // navigate(`/result-analysis/${quizId}`);
+                                        }}>End Quiz</button>
+                                </div>
+
+
                             </div>
                         </div>
                     </div>
