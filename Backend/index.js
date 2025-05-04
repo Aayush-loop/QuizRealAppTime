@@ -42,7 +42,7 @@ app.get('/api/v1', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/quiz', quizRoutes);
 
-// require('./src/sockets/socket')(io);
+require('./src/sockets/socket')(io);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     connectDB();
