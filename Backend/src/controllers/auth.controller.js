@@ -131,8 +131,29 @@ const logoutuser = async (req, res) => {
 
 }
 
+const getProfile = async (req, res) => {
+    try {
+        const { id } = req.user;
+        const user = await User.findById(id).select('-refreshToken -password -__v');
+
+        if (!user) {
+            throw new apiError(404, 'User not found');
+        }
+
+        res.status(200).json(new apiResponse(200, 'User profile fetched successfully', user));
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            message: error.message || 'Internal Server Error',
+            success: false,
+        });
+    }
+};
+
+
 module.exports = {
     registerUser,
     loginUser,
-    logoutuser
+    logoutuser,
+    getProfile
 }
