@@ -47,6 +47,11 @@ const quizSchema = new mongoose.Schema({
         type: [questionAnswerSchema],
         required: false,
     },
+    status: {
+        type: String,
+        enum: ['upcoming', 'completed', 'ongoing'],
+        default: 'upcoming',
+    }
 
 });
 
