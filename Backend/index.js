@@ -34,15 +34,16 @@ app.use(cors({
 const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/auth.route');
 const quizRoutes = require('./src/routes/quiz.route');
-
+const resultRoutes = require('./src/routes/result.route');
 app.get('/api/v1', (req, res) => {
     res.json({ message: "Welcome to the API" });
 });
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/quiz', quizRoutes);
+app.use('/api/v1/result', resultRoutes);
 
-require('./src/sockets/socket')(io);
+//require('./src/sockets/socket')(io);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     connectDB();
