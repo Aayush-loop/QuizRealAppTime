@@ -102,8 +102,17 @@ const addQuestion = async (req, res) => {
 
 const getQuizzes = async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0]; // "2025-05-02"
-        const quizzes = await Quiz.find({ date: { $gt: today } }).populate('topic').select('-questions').sort({ createdAt: -1 });
+        const { status } = req.query;
+
+
+        const filter = {}
+        if (status) {
+            if (!['upcoming', 'completed', 'ongoing'].includes(status)) {
+                throw new apiError(400, "Invalid status filter. Allowed values: upcoming, completed, ongoing");
+            }
+            filter.status = status;
+        }
+        const quizzes = await Quiz.find(filter).populate('topic').sort({ createdAt: -1 });
         res.status(200).json(new apiResponse(200, "Quizzes fetched successfully", quizzes));
     } catch (error) {
         console.log(error);
@@ -183,6 +192,36 @@ const getQuestion = async (req, res) => {
     }
 };
 
+const updateQuiz = async (req, res) => {
+    try {
+        const quizId = req.params.quizId;
+
+        if (!quizId || !objectIdRegex.test(quizId)) {
+            throw new apiError(400, "Invalid or missing Quiz ID");
+        }
+        const quiz = await Quiz.findById(quizId);
+        if (!quiz) {
+            throw new apiError(404, "Quiz not found");
+        }
+
+        const updateQuiz = await Quiz.findByIdAndUpdate(quizId, req.body, { new: true });
+
+        if (!updateQuiz) {
+            throw new apiError(404, "Failed to update quiz");
+        }
+        const updatedQuiz = await Quiz.findById(quizId).populate('topic');
+
+        res.status(200).json(new apiResponse(200, "Quiz updated successfully", updatedQuiz));
+    } catch (error) {
+        console.error("Error updating quiz:", error);
+        res.status(500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+
+    }
+}
+
 
 module.exports = {
     addQuiz,
@@ -190,4 +229,5 @@ module.exports = {
     getQuizById,
     getQuestion,
     getQuizzes,
+    updateQuiz,
 }
