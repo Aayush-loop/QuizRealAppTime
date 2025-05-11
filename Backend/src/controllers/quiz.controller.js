@@ -85,7 +85,7 @@ const addQuestion = async (req, res) => {
             })),
             image
         };
-        console.log("New question:", newQuestion);
+        // console.log("New question:", newQuestion);
         quiz.questions.push(newQuestion);
         await quiz.save();
 
