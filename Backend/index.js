@@ -43,7 +43,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/quiz', quizRoutes);
 app.use('/api/v1/result', resultRoutes);
 
-//require('./src/sockets/socket')(io);
+require('./src/sockets/socket')(io);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     connectDB();
