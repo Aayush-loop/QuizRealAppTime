@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react'
-import { use } from 'react';
-import { io } from "socket.io-client";
-const socket = io("http://localhost:3000");
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useContext } from 'react'
+import { useNavigate, useParams } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
+import socket from '../utils/socket';
+
 
 const quizRules = [
     "Use of any external help such as notes, internet, or AI tools is strictly prohibited.",
@@ -16,19 +16,39 @@ const quizRules = [
 
 const Lobby = () => {
     const navigate = useNavigate();
+    const { quizId } = useParams();
+    const user = useContext(AuthContext).user;
     useEffect(() => {
         socket.on("startQuiz", (data) => {
             console.log(data);
-            navigate(`/playground`);
+            navigate(`/playground/${quizId}`);
         });
 
         return () => {
             socket.off("startQuiz");
         };
     }, []);
+
+    useEffect(() => {
+        socket.emit("joinQuiz", {
+            ...user,
+            quizId: quizId
+        })
+    }, [user, quizId]);
+
+    useEffect(() => {
+        if (!socket.connected) {
+            socket.connect();
+        }
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
+
     return (
         <>
-            <section class="bg-white dark:bg-gray-900">
+            <section class="bg-white dark:bg-gray-900 min-h-screen">
                 <div class="py-8 px-4 mx-auto max-w-screen-xl sm:py-16 lg:px-6">
                     <div className="max-w-screen-xl mb-8 lg:mb-16">
                         <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">

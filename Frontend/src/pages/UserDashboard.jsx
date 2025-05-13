@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
 import UserLandingHome from '../components/UserLandingHome';
 import Quiz from './Quiz';
@@ -9,30 +8,12 @@ import { AuthContext } from '../contexts/AuthContext';
 import Logout from '../components/Logout';
 import Loading from '../components/Loading';
 
-// const handleUpdate = (data) => {
-//     // console.log(data)
-//     setUser({
-//         name: data.name,
-//         email: data.email,
-//         image: `${data.image || '/images/avatar.png'}`
-//     })
-// }
-
-const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    if (!isSidebarOpen) return;
-    setSidebarOpen(false);
-};
-
-
 const UserDashboard = () => {
-    const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('home');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const { loading, user } = useContext(AuthContext);
 
-
-    const { loading } = useContext(AuthContext);
-    const [user, setUser] = useState(useContext(AuthContext).user);
+    console.log(user);
 
     if (loading || !user) {
         return <Loading />

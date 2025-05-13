@@ -1,5 +1,4 @@
 import React, { useState, useContext } from 'react'
-import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
 import { AdminLandingHome } from '../components/AdminLandingHome';
 import AddQuiz from './AddQuestion';

@@ -3,7 +3,7 @@ import ModalHandler from '../utils/Modalhandler';
 import Loading from '../components/Loading';
 import API from '../utils/API';
 import { toast } from 'react-toastify';
-import { use } from 'react';
+
 
 const AddQuiz = () => {
     const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ const AddQuiz = () => {
     const fetchQuizzes = async () => {
         try {
             setLoading(true);
-            const response = await API.get('/quiz');
+            const response = await API.get('/quiz?status=upcoming');
             if (response.status === 200) {
                 setQuizzes(Array.isArray(response.data.data) ? response.data.data : []);
             }
@@ -173,7 +173,7 @@ const AddQuiz = () => {
 
     return (
         <>
-            <div className=' mx-auto border rounded-lg p-5  bg-white mb-5 dark:bg-gray-800 dark:border-gray-700'>
+            {/* <div className=' mx-auto border rounded-lg p-5  bg-white mb-5 dark:bg-gray-800 dark:border-gray-700'>
                 <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 mb-3">
                     <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                         Quiz
@@ -186,7 +186,7 @@ const AddQuiz = () => {
                         Publish
                     </button>
                 </div>
-            </div>
+            </div> */}
 
             <div className='mx-auto border rounded-lg p-5 bg-white mb-5 dark:bg-gray-800 dark:border-gray-700'>
                 <form>

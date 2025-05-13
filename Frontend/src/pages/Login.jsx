@@ -1,14 +1,13 @@
-import React from 'react'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import API from "../utils/API"
+import { AuthContext } from '../contexts/AuthContext'
 
 const Login = () => {
     const navigate = useNavigate()
-
-
+    const { setUser, setIsAuthenticated } = React.useContext(AuthContext)
     const [logindata, setLoginData] = useState({
         email: null,
         password: null,
@@ -19,7 +18,7 @@ const Login = () => {
             ...logindata,
             [e.target.name]: e.target.value
         })
-        console.log(logindata)
+        // console.log(logindata)
     }
 
     const handleSubmit = async (e) => {
@@ -27,8 +26,16 @@ const Login = () => {
             e.preventDefault();
             const response = await API.post('/auth/login', logindata, { withCredentials: true });
             if (response.status === 200) {
+
                 toast.success(response.data.message);
-                navigate('/');
+                setIsAuthenticated(true)
+                setUser(response.data.data)
+                if (response.data.data.role === "student") {
+                    navigate('/dashboard');
+                }
+                else {
+                    navigate('/admin')
+                }
             } else {
                 toast.error(response.data.message);
             }
@@ -57,7 +64,7 @@ const Login = () => {
                                     </div>
                                     <div>
                                         <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your password</label>
-                                        <input type="password" name="password" id="password" placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" required onChange={handleChange} autoComplete='off' />
+                                        <input type="password" name="password" id="password" placeholder="" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" required onChange={handleChange} autoComplete='off' />
                                     </div>
                                     <div className="flex justify-between">
                                         <div className="flex items-start">
@@ -66,7 +73,7 @@ const Login = () => {
                                             </div>
                                             <label htmlFor="remember" className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Remember me</label>
                                         </div>
-                                        <a href="#" className="font-sm text-blue-600 hover:underline dark:text-blue-500">Forgot Password?</a>
+                                        {/* <a href="#" className="font-sm text-blue-600 hover:underline dark:text-blue-500">Forgot Password?</a> */}
                                     </div>
                                     <button type="submit" className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Login</button>
                                     <p className="text-sm font-light text-gray-500 dark:text-gray-400">
