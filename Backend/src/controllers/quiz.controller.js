@@ -103,8 +103,6 @@ const addQuestion = async (req, res) => {
 const getQuizzes = async (req, res) => {
     try {
         const { status } = req.query;
-
-
         const filter = {}
         if (status) {
             if (!['upcoming', 'completed', 'ongoing'].includes(status)) {

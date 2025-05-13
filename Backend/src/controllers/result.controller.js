@@ -1,19 +1,15 @@
 const Result = require('../models/result.model');
 const apiResponse = require('../utils/apiResponse');
 const Quiz = require('../models/quiz.model');
-
+const mongoose = require('mongoose');
 
 const getResult = async (req, res) => {
     try {
-
         const resultId = req.params.resultId || req.query.resultId;
         const userId = (req.user && req.user.role === "instructor") ? req.query.userId : req.user.id;
 
-
         const query = { user: userId };
-        if (resultId) {
-            query._id = resultId;
-        }
+        if (resultId) query._id = resultId;
 
         const allResults = await Result.find(query)
             .populate([
@@ -33,20 +29,13 @@ const getResult = async (req, res) => {
                 const q = questionMap[entry.question.toString()];
                 if (!q) return null;
 
-                const correctAnswers = q.options
-                    .filter(opt => opt.isCorrect)
-                    .map(opt => opt._id.toString());
-
                 const submitted = entry.submittedAnswer.map(a => a.toString());
-
-                const isCorrect =
-                    submitted.length === correctAnswers.length &&
-                    submitted.every(ans => correctAnswers.includes(ans));
+                const obtainedMarks = entry.obtainedMarks || 0;
 
                 let status = "unattempted";
                 if (submitted.length > 0) {
-                    status = isCorrect ? "correct" : "wrong";
-                    if (isCorrect) correct++;
+                    status = obtainedMarks > 0 ? "correct" : "wrong";
+                    if (obtainedMarks > 0) correct++;
                     else wrong++;
                 }
 
@@ -54,13 +43,15 @@ const getResult = async (req, res) => {
                     qNo: index + 1,
                     question: q.question,
                     marks: q.marks,
+                    obtainedMarks,
                     options: q.options.map(opt => ({ id: opt._id.toString(), text: opt.option })),
                     selected: submitted,
-                    correctAnswers,
+                    correctAnswers: q.options.filter(opt => opt.isCorrect).map(opt => opt._id.toString()),
                     status,
                     timeTaken: entry.timeTaken,
                 };
             }).filter(Boolean);
+
             return {
                 resultId: result._id,
                 quizTitle: result.quiz.title,
@@ -74,19 +65,14 @@ const getResult = async (req, res) => {
         });
 
         res.status(200).json(new apiResponse(200, "Results fetched successfully", formattedResults));
-
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: error.message,
-            success: false,
-        });
+        res.status(500).json({ message: error.message, success: false });
     }
 };
 
 const getMyLeaderBoard = async (req, res) => {
     const userId = req.user.id;
-
     try {
         const results = await Result.find({ user: userId })
             .populate({ path: 'quiz', select: 'title fullMarks questions' });
@@ -95,42 +81,11 @@ const getMyLeaderBoard = async (req, res) => {
             const quiz = r.quiz;
             const totalUsers = await Result.countDocuments({ quiz: quiz._id });
 
-
-            const questionMap = {};
-            quiz.questions.forEach(q => {
-                questionMap[q._id.toString()] = q;
-            });
-
-
-            const userScore = r.submission.reduce((acc, s) => {
-                const q = questionMap[s.question.toString()];
-                if (!q) return acc;
-
-                const correctAnswers = q.options.filter(o => o.isCorrect).map(o => o._id.toString());
-                const submitted = s.submittedAnswer.map(id => id.toString());
-
-                const isCorrect = correctAnswers.length === submitted.length &&
-                    submitted.every(ans => correctAnswers.includes(ans));
-
-                return acc + (isCorrect ? q.marks : 0);
-            }, 0);
-
+            const userScore = r.submission.reduce((acc, s) => acc + (s.obtainedMarks || 0), 0);
 
             const allScores = await Result.find({ quiz: quiz._id }).select('user submission');
             const rankedList = allScores.map(rs => {
-                const score = rs.submission.reduce((total, sub) => {
-                    const q = questionMap[sub.question.toString()];
-                    if (!q) return total;
-
-                    const correctAnswers = q.options.filter(o => o.isCorrect).map(o => o._id.toString());
-                    const submitted = sub.submittedAnswer.map(id => id.toString());
-
-                    const isCorrect = correctAnswers.length === submitted.length &&
-                        submitted.every(ans => correctAnswers.includes(ans));
-
-                    return total + (isCorrect ? q.marks : 0);
-                }, 0);
-
+                const score = rs.submission.reduce((total, sub) => total + (sub.obtainedMarks || 0), 0);
                 return { id: rs.user.toString(), score };
             }).sort((a, b) => b.score - a.score);
 
@@ -144,17 +99,13 @@ const getMyLeaderBoard = async (req, res) => {
                 quizId: quiz._id,
             };
         }));
-        res.status(200).json(new apiResponse(200, "Leaderboard fetched successfully", data));
 
+        res.status(200).json(new apiResponse(200, "Leaderboard fetched successfully", data));
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: error.message,
-            success: false,
-        });
+        res.status(500).json({ message: error.message, success: false });
     }
 };
-
 
 const overallLeaderboard = async (req, res) => {
     try {
@@ -165,11 +116,10 @@ const overallLeaderboard = async (req, res) => {
             ]);
 
         const userScores = {};
-
         allResults.forEach(result => {
             const userId = result.user._id.toString();
-            const fullMarks = result.quiz?.fullMarks || 100; // default fallback
-            const score = result.submission.reduce((sum, s) => sum + (s.marksEarned || 0), 0);
+            const fullMarks = result.quiz?.fullMarks || 100;
+            const score = result.submission.reduce((sum, s) => sum + (s.obtainedMarks || 0), 0);
 
             if (!userScores[userId]) {
                 userScores[userId] = {
@@ -193,53 +143,28 @@ const overallLeaderboard = async (req, res) => {
                 percentage: user.totalPossible === 0 ? 0 : Math.round((user.score / user.totalPossible) * 100),
             }))
             .sort((a, b) => b.percentage - a.percentage)
-            .slice(0, 5); // Top 5
+            .slice(0, 5);
 
         res.status(200).json(new apiResponse(200, "Leaderboard fetched successfully", leaderboard));
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: error.message,
-            success: false,
-        });
+        res.status(500).json({ message: error.message, success: false });
     }
 };
 
 const getQuizLeaderboard = async (req, res) => {
     try {
         const { quizId } = req.params;
-
-        // Get quiz to know full marks and questions
         const quiz = await Quiz.findById(quizId);
-        if (!quiz) {
-            return res.status(404).json(new apiResponse(404, "Quiz not found", null));
-        }
+        if (!quiz) return res.status(404).json(new apiResponse(404, "Quiz not found", null));
 
         const fullMarks = quiz.fullMarks;
-        const questionMap = {};
-        quiz.questions.forEach(q => {
-            questionMap[q._id.toString()] = q;
-        });
 
-        // Get all results for this quiz with user info
         const results = await Result.find({ quiz: quizId })
             .populate({ path: 'user', select: 'name email profileImage' });
 
-        // Calculate scores
         const leaderboard = results.map(r => {
-            const totalScore = r.submission.reduce((sum, s) => {
-                const q = questionMap[s.question.toString()];
-                if (!q) return sum;
-
-                const correctAnswers = q.options.filter(opt => opt.isCorrect).map(opt => opt._id.toString());
-                const submitted = s.submittedAnswer.map(id => id.toString());
-
-                const isCorrect = submitted.length === correctAnswers.length &&
-                    submitted.every(ans => correctAnswers.includes(ans));
-
-                return sum + (isCorrect ? q.marks : 0);
-            }, 0);
-
+            const totalScore = r.submission.reduce((sum, s) => sum + (s.obtainedMarks || 0), 0);
             const percent = Math.round((totalScore / fullMarks) * 100);
 
             return {
@@ -254,30 +179,63 @@ const getQuizLeaderboard = async (req, res) => {
             };
         });
 
-        // Sort by score descending
         leaderboard.sort((a, b) => b.rawScore - a.rawScore);
 
-        // Add rank
         leaderboard.forEach((user, index) => {
             user.rank = `${index + 1}/${leaderboard.length}`;
             delete user.rawScore;
         });
 
         res.status(200).json(new apiResponse(200, "Leaderboard fetched successfully", leaderboard));
-
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
+
+const dashboard = async (req, res) => {
+    try {
+        const userId = new mongoose.Types.ObjectId(req.user.id);
+
+        const stats = await Result.aggregate([
+            { $match: { user: userId } },
+            { $unwind: '$submission' },
+            {
+                $group: {
+                    _id: null,
+                    attempted: { $sum: 1 },
+                    correct: {
+                        $sum: {
+                            $cond: [{ $gt: ['$submission.obtainedMarks', 0] }, 1, 0]
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    attempted: 1,
+                    correct: 1,
+                    incorrect: { $subtract: ['$attempted', '$correct'] }
+                }
+            }
+        ]);
+
+        const summary = stats[0] || { attempted: 0, correct: 0, incorrect: 0 };
+        res.status(200).json(new apiResponse(200, "Dashboard summary fetched successfully", summary));
+    } catch (error) {
+        console.error('Dashboard summary error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
 
 
 module.exports = {
     getResult,
     getMyLeaderBoard,
     overallLeaderboard,
-    getQuizLeaderboard
+    getQuizLeaderboard,
+    dashboard
 };

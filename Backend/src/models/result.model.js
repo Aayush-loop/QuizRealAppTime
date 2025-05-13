@@ -27,7 +27,11 @@ const resultSchema = mongoose.Schema({
                     type: mongoose.Schema.Types.ObjectId,
                     required: true,
                 }
-            ]
+            ],
+            obtainedMarks: {
+                type: Number,
+                default: 0,
+            }
 
         }
     ]
