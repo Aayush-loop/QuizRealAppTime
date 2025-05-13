@@ -1,16 +1,28 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, act } from 'react'
+import { useNavigate } from 'react-router-dom';
 import ModalHandler from '../utils/Modalhandler';
 import Loading from '../components/Loading'
-import QuizInformation from '../components/QuizInformation'
 import API from '../utils/API'
 import { toast } from 'react-toastify'
+import { CircleCheckBig, AlarmClockCheck, RefreshCcwDot, Users, Calendar, BarChart2 } from 'lucide-react'
+import socket from '../utils/socket';
+
 
 
 export const AdminLandingHome = () => {
-
+    const navigate = useNavigate()
     const [loading, setLoading] = useState(false);
     const [activeModal, setActiveModal] = useState(null);
     const [quizAccumulator, setQuizAccumulator] = useState([]);
+
+    const [activeTab, setActiveTab] = useState('upcoming');
+
+    const handleTabClick = (tab) => {
+        setActiveTab(tab);
+    };
+
+    const openModal = (modal) => setActiveModal(modal);
+    const closeModal = () => setActiveModal(null);
 
     const resetQuiz = () => {
         setQuiz({
@@ -38,8 +50,6 @@ export const AdminLandingHome = () => {
         bannerImage: null,
 
     })
-    const openModal = (modal) => setActiveModal(modal);
-    const closeModal = () => setActiveModal(null);
 
 
     const handleSubmit = async (e) => {
@@ -93,10 +103,11 @@ export const AdminLandingHome = () => {
     const fetchQuizzes = async () => {
         try {
             setLoading(true);
-            const response = await API.get('/quiz');
+            const response = await API.get(`/quiz?status=${activeTab}`);
             if (response.status === 200) {
                 setQuizAccumulator(Array.isArray(response.data.data) ? response.data.data : []);
             }
+
         } catch (error) {
             console.error("Error fetching quizzes:", error);
         } finally {
@@ -104,8 +115,24 @@ export const AdminLandingHome = () => {
         }
     };
 
+    const handleStartQuiz = (quizId) => {
+        socket.emit('initiateQuiz', quizId)
+        navigate(`/start-quiz/${quizId}`)
+    }
+
     useEffect(() => {
         fetchQuizzes();
+    }, [activeTab]);
+
+
+    useEffect(() => {
+        if (!socket.connected) {
+            socket.connect();
+        }
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     return (
@@ -123,69 +150,233 @@ export const AdminLandingHome = () => {
                 </div>
             </div>
 
+            <div className=' mx-auto border rounded-lg p-5  bg-white mb-5 dark:bg-gray-800 dark:border-gray-700 '>
+                <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+                    <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab" >
+                        <li className="me-2">
+                            <a
+                                href="#"
+                                className={`inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg ${activeTab === 'upcoming'
+                                    ? 'text-blue-600 border-blue-600'
+                                    : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'
+                                    } dark:text-gray-400 group`}
+                                onClick={() => handleTabClick('upcoming')}
+                            >
+                                <AlarmClockCheck />
+                                <span className='ms-2'>Upcoming</span>
+                            </a>
+                        </li>
+
+                        <li className="me-2">
+                            <a
+                                href="#"
+                                className={`inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg ${activeTab === 'completed'
+                                    ? 'text-blue-600 border-blue-600'
+                                    : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'
+                                    } dark:text-gray-400 group`}
+                                onClick={() => handleTabClick('completed')}
+                            >
+                                <CircleCheckBig /> <span className='ms-2'>Completed</span>
+                            </a>
+                        </li>
+
+                        <li className="me-2">
+                            <a
+                                href="#"
+                                className={`inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg ${activeTab === 'ongoing'
+                                    ? 'text-blue-600 border-blue-600'
+                                    : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'
+                                    } dark:text-gray-400 group`}
+                                onClick={() => handleTabClick('ongoing')}
+                            >
+                                <RefreshCcwDot /><span className='ms-2'>Ongoing</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
             {
-                loading ? (
-                    <Loading />
-                ) : (
-                    quizAccumulator.length > 0 ? (
-                        <div className='flex flex-col gap-3'>
-                            {quizAccumulator.map((quiz, index) => (
-                                <QuizInformation key={index}
-                                    title={quiz.title}
-                                    date={quiz.date}
-                                    attempts={quiz.attempts || 0}  //this  need to be changed
-                                    passRate={quiz.passRate || 0} //this  need to be changed
-                                    status={quiz.status || 'Upcoming'} //this  need to be changed
-                                    quizId={quiz._id}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className='flex justify-center items-center h-96'>
-                            <h1 className='text-2xl font-semibold text-gray-900 dark:text-white'>
-                                No Quiz Found
-                            </h1>
-                        </div>
-                    )
-                )
+                activeTab === 'upcoming' &&
+                <>
+                    {
+                        loading ? (
+                            <Loading />
+                        ) : (
+                            quizAccumulator.length > 0 ? (
+                                <div className='flex flex-col gap-3'>
+                                    {quizAccumulator.map((quiz, index) => (
+                                        <div className="border rounded-lg px-6 py-4 bg-white dark:bg-gray-800 dark:border-gray-700 w-full">
+                                            <div className="flex flex-col gap-4  w-full">
+
+                                                <div className="flex items-center justify-between w-full md:w-auto">
+                                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                                                        {quiz.title}
+                                                    </h3>
+                                                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">Upcoming</span>
+                                                </div>
+
+                                                <div className='flex items-center justify-between w-full md:w-auto'>
+                                                    <div className="flex flex-wrap md:flex-nowrap justify-start items-center gap-6 text-sm text-gray-700 dark:text-gray-300 w-full">
+                                                        <div className="flex items-center gap-1">
+                                                            <Users className="w-4 h-4" />
+                                                            <span>10 Attempts</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            <span>{quiz.date}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <BarChart2 className="w-4 h-4" />
+                                                            <span>100 % Passed</span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        href="#"
+                                                        className="text-blue-600 font-medium hover:underline whitespace-nowrap cursor-pointer"
+                                                        onClick={() => handleStartQuiz(quiz._id)}
+                                                    >
+                                                        Start
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className='flex justify-center items-center h-96'>
+                                    <h1 className='text-2xl font-semibold text-gray-900 dark:text-white'>
+                                        No Quiz Found
+                                    </h1>
+                                </div>
+                            )
+                        )
+                    }
+
+                </>
             }
 
-            {/* <div className='flex flex-col gap-3'>
-                <QuizInformation
-                    title='This is the sample quiz name'
-                    date='2021-09-12'
-                    attempts='10'
-                    passRate='80'
-                    status='Completed'
-                />
-
-                <QuizInformation
-                    title='This is the sample quiz name'
-                    date='2021-09-12'
-                    attempts='10'
-                    passRate='80'
-                    status='Upcoming'
-                />
-
-                <QuizInformation
-                    title='This is the sample quiz name'
-                    date='2021-09-12'
-                    attempts='10'
-                    passRate='80'
-                    status='Completed'
-                />
-
-                <QuizInformation
-                    title='This is the sample quiz name'
-                    date='2021-09-12'
-                    attempts='10'
-                    passRate='80'
-                    status='Upcoming'
-                />
-
-            </div> */}
 
 
+            {
+                activeTab === 'completed' &&
+                <>
+                    {
+                        loading ? (
+                            <Loading />
+                        ) : (
+                            quizAccumulator.length > 0 ? (
+                                <div className='flex flex-col gap-3'>
+                                    {quizAccumulator.map((quiz, index) => (
+                                        <div className="border rounded-lg px-6 py-4 bg-white dark:bg-gray-800 dark:border-gray-700 w-full">
+                                            <div className="flex flex-col gap-4  w-full">
+
+                                                <div className="flex items-center justify-between w-full md:w-auto">
+                                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                                                        {quiz.title}
+                                                    </h3>
+                                                    <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Completed</span>
+                                                </div>
+
+                                                <div className='flex items-center justify-between w-full md:w-auto'>
+                                                    <div className="flex flex-wrap md:flex-nowrap justify-start items-center gap-6 text-sm text-gray-700 dark:text-gray-300 w-full">
+                                                        <div className="flex items-center gap-1">
+                                                            <Users className="w-4 h-4" />
+                                                            <span>10 Attempts</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            <span>{quiz.date}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <BarChart2 className="w-4 h-4" />
+                                                            <span>100 % Passed</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* <button
+                                                        href="#"
+                                                        className="text-blue-600 font-medium hover:underline whitespace-nowrap cursor-pointer"
+                                                        onClick={() => handleStartQuiz(quiz._id)}
+                                                    >
+                                                        Start
+                                                    </button> */}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className='flex justify-center items-center h-96'>
+                                    <h1 className='text-2xl font-semibold text-gray-900 dark:text-white'>
+                                        No Quiz Found
+                                    </h1>
+                                </div>
+                            )
+                        )
+                    }
+
+                </>
+            }
+
+
+            {
+                activeTab === 'ongoing' &&
+                <>
+                    {
+                        loading ? (
+                            <Loading />
+                        ) : (
+                            quizAccumulator.length > 0 ? (
+                                <div className='flex flex-col gap-3'>
+                                    {quizAccumulator.map((quiz, index) => (
+                                        <div className="border rounded-lg px-6 py-4 bg-white dark:bg-gray-800 dark:border-gray-700 w-full">
+                                            <div className="flex flex-col gap-4  w-full">
+
+                                                <div className="flex items-center justify-between w-full md:w-auto">
+                                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                                                        {quiz.title}
+                                                    </h3>
+                                                    <span class="bg-purple-100 text-purple-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-purple-900 dark:text-purple-300">Ongoing</span>
+                                                </div>
+
+                                                <div className='flex items-center justify-between w-full md:w-auto'>
+                                                    <div className="flex flex-wrap md:flex-nowrap justify-start items-center gap-6 text-sm text-gray-700 dark:text-gray-300 w-full">
+                                                        <div className="flex items-center gap-1">
+                                                            <Users className="w-4 h-4" />
+                                                            <span>10 Attempts</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            <span>{quiz.date}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <BarChart2 className="w-4 h-4" />
+                                                            <span>100 % Passed</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* <button
+                                                        href="#"
+                                                        className="text-blue-600 font-medium hover:underline whitespace-nowrap cursor-pointer"
+                                                    onClick={() => handleStartQuiz(quiz._id)}
+                                                    >
+                                                        Start
+                                                    </button> */}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className='flex justify-center items-center h-96'>
+                                    <h1 className='text-2xl font-semibold text-gray-900 dark:text-white'>
+                                        No Quiz Found
+                                    </h1>
+                                </div>
+                            )
+                        )
+                    }
+
+                </>
+            }
 
             <ModalHandler title='Create Quiz' isVisible={activeModal === 'CreateQuizModal'} onClose={closeModal}>
                 {
@@ -205,61 +396,61 @@ export const AdminLandingHome = () => {
                                 </div>
 
 
-                                <div class="grid gap-4 mb-4 grid-cols-2">
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <label for="date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date</label>
-                                        <input type="date" name="date" id="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
+                                <div className="grid gap-4 mb-4 grid-cols-2">
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label for="date" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date</label>
+                                        <input type="date" name="date" id="date" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
                                     </div>
-                                    <div class="col-span-2 sm:col-span-1">
+                                    <div className="col-span-2 sm:col-span-1">
 
 
-                                        <label for="time" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Time</label>
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
-                                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <label for="time" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Time</label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                                                     <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4a1 1 0 1 0-2 0v4a1 1 0 0 0 .293.707l3 3a1 1 0 0 0 1.414-1.414L13 11.586V8Z" clip-rule="evenodd" />
                                                 </svg>
                                             </div>
-                                            <input type="time" id="time" name='time' class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required onChange={handleChange} />
+                                            <input type="time" id="time" name='time' className="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required onChange={handleChange} />
                                         </div>
 
 
                                     </div>
                                 </div>
 
-                                <div class="grid gap-4 mb-2 grid-cols-2">
+                                <div className="grid gap-4 mb-2 grid-cols-2">
 
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <label for="fullMarks" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Full Marks</label>
-                                        <input type="text" name="fullMarks" id="fullMarks" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label for="fullMarks" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Full Marks</label>
+                                        <input type="text" name="fullMarks" id="fullMarks" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
                                     </div>
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <label for="passMarks" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Pass Marks</label>
-                                        <input type="text" name="passMarks" id="passMarks" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
-
-                                    </div>
-
-                                </div>
-
-
-                                <div class="grid gap-4 mb-2 grid-cols-2">
-
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <label for="topic" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Topic</label>
-                                        <input type="text" name="topic" id="topic" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
-                                    </div>
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <label for="numberOfQuestions" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">No of Questions</label>
-                                        <input type="text" name="numberOfQuestions" id="numberOfQuestions" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label for="passMarks" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Pass Marks</label>
+                                        <input type="text" name="passMarks" id="passMarks" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
 
                                     </div>
 
                                 </div>
 
 
-                                <div class="grid mb-2 grid-cols-1">
-                                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="bannerImage">Banner Image</label>
-                                    <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="bannerImage" name='bannerImage' type="file" onChange={handleChange} />
+                                <div className="grid gap-4 mb-2 grid-cols-2">
+
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label for="topic" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Topic</label>
+                                        <input type="text" name="topic" id="topic" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
+                                    </div>
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label for="numberOfQuestions" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">No of Questions</label>
+                                        <input type="text" name="numberOfQuestions" id="numberOfQuestions" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required="" onChange={handleChange} />
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="grid mb-2 grid-cols-1">
+                                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="bannerImage">Banner Image</label>
+                                    <input className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="bannerImage" name='bannerImage' type="file" onChange={handleChange} />
                                 </div>
 
                                 <div className='flex justify-end items-center'>
