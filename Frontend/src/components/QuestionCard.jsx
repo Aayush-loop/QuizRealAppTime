@@ -1,28 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Bookmark } from 'lucide-react';
-import API from '../utils/API';
 import Loading from './Loading';
-import { io } from "socket.io-client";
-const socket = io("http://localhost:3000");
+
 
 const QuestionCard = () => {
     const [questionIndex, setQuestionIndex] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    // const [seconds, setSeconds] = useState(0);
 
-    // useEffect(() => {
-    //     const timer = setInterval(() => {
-    //         setSeconds(prev => prev + 1);
-    //     }, 1000);
-
-    //     return () => clearInterval(timer);
-    // }, []);
-
-    // const formatTime = (totalSeconds) => {
-    //     const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    //     const secs = String(totalSeconds % 60).padStart(2, '0');
-    //     return `${mins}:${secs}`;
-    // };
     const [question, setQuestion] = useState(null);
 
     useEffect(() => {

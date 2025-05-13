@@ -1,12 +1,12 @@
 import { useEffect, useState, useContext } from "react"
 import Loading from "./Loading"
-import { io } from "socket.io-client"
+import socket from "../utils/socket";
 import TimerDisplay from "./TimerDisplay"
 import { AuthContext } from '../contexts/AuthContext';
 import { useParams, useNavigate } from "react-router-dom";
 import ModalHandler from "../utils/Modalhandler";
 
-const socket = io("http://localhost:3000")
+
 
 const Playground = () => {
     const navigate = useNavigate()
@@ -31,7 +31,7 @@ const Playground = () => {
     const closeModal = () => {
         setActiveModal(null);
         setLoading(false);
-        navigate('/dashbaord');
+        navigate('/dashboard');
     };
 
     const handleSubmit = () => {
@@ -52,6 +52,17 @@ const Playground = () => {
         setSelectedOptionIds([])
         setHasSubmitted(true)
     }
+
+
+    useEffect(() => {
+        if (!socket.connected) {
+            socket.connect();
+        }
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 
     useEffect(() => {
         socket.on("update-question", (data) => {
@@ -78,41 +89,38 @@ const Playground = () => {
         }
     }, [])
 
-    console.log("Active Modal:", activeModal);
-
     if (loading) return <Loading />
-
-    {
-        hasSubmitted && (
-            <div className="min-h-screen flex items-center justify-center dark:bg-gray-900">
-                <div className="max-w-lg p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <div>
-                        <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Answer Submitted!</h5>
-                    </div>
-                    <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-                        Please wait for the next question from the admin.
-                    </p>
-                    <div
-                        className="flex items-center p-4 mb-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
-                        role="alert"
-                    >
-                        <svg className="shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                        </svg>
-                        <span className="sr-only">Info</span>
-                        <div>
-                            <span className="font-medium">Warning!</span> Do not refresh the page or close the tab, otherwise you will lose your progress.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
 
     return (
 
         <>
+            {
+                hasSubmitted && (
+                    <div className="min-h-screen flex items-center justify-center dark:bg-gray-900">
+                        <div className="max-w-lg p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                            <div>
+                                <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Answer Submitted!</h5>
+                            </div>
+                            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
+                                Please wait for the next question from the admin.
+                            </p>
+                            <div
+                                className="flex items-center p-4 mb-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
+                                role="alert"
+                            >
+                                <svg className="shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                                </svg>
+                                <span className="sr-only">Info</span>
+                                <div>
+                                    <span className="font-medium">Warning!</span> Do not refresh the page or close the tab, otherwise you will lose your progress.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
             <div className="min-h-screen flex items-center justify-center dark:bg-gray-900">
                 <div className="w-full max-w-3xl p-6 border border-gray-200 rounded-lg dark:border-gray-700">
                     <div className="flex justify-between items-start mb-4">
