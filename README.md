@@ -17,7 +17,7 @@ https://nodejs.org/en/download
 ```bash
 cd Backend
 npm install
-npm run dev  # or: node index.js
+npm run dev
 ```
 
 Make sure to create a `.env` file inside the `Backend/` folder with the following example content:
@@ -41,7 +41,7 @@ REFRESH_TOKEN_EXPIRY=7d
 ```bash
 cd Frontend
 npm install
-npm run dev  # or: npm start
+npm run dev
 ```
 
 
@@ -62,6 +62,7 @@ npm run dev  # or: npm start
 1. Clone the repository
 2. Run the backend
 3. Run the frontend
+4. Open the browser with the shown link
 
 ---
 
