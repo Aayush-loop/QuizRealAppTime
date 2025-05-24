@@ -1,10 +1,10 @@
 import { useEffect, useState, useContext } from "react"
 import Loading from "./Loading"
-import socket from "../utils/socket";
 import TimerDisplay from "./TimerDisplay"
 import { AuthContext } from '../contexts/AuthContext';
 import { useParams, useNavigate } from "react-router-dom";
 import ModalHandler from "../utils/Modalhandler";
+import { SocketContext } from "../contexts/SocketContext";
 
 
 
@@ -12,6 +12,8 @@ const Playground = () => {
     const navigate = useNavigate()
     const userId = useContext(AuthContext).user._id;
     const { quizId } = useParams()
+    const socket = useContext(SocketContext)
+
 
     const [questionIndex, setQuestionIndex] = useState(null)
     const [loading, setLoading] = useState(false)
@@ -53,16 +55,6 @@ const Playground = () => {
         setHasSubmitted(true)
     }
 
-
-    useEffect(() => {
-        if (!socket.connected) {
-            socket.connect();
-        }
-
-        return () => {
-            socket.disconnect();
-        };
-    }, []);
 
     useEffect(() => {
         socket.on("update-question", (data) => {

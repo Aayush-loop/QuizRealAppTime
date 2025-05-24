@@ -51,6 +51,10 @@ const quizSchema = new mongoose.Schema({
         type: String,
         enum: ['upcoming', 'completed', 'ongoing'],
         default: 'upcoming',
+    },
+    joinCode: {
+        type: Number,
+        default: () => Math.floor(10000 + Math.random() * 90000)
     }
 
 });

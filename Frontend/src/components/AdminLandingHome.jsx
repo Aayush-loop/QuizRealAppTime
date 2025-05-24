@@ -1,11 +1,10 @@
-import React, { useState, useEffect, act } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom';
 import ModalHandler from '../utils/Modalhandler';
 import Loading from '../components/Loading'
 import API from '../utils/API'
 import { toast } from 'react-toastify'
 import { CircleCheckBig, AlarmClockCheck, RefreshCcwDot, Users, Calendar, BarChart2 } from 'lucide-react'
-import socket from '../utils/socket';
 
 
 
@@ -116,24 +115,12 @@ export const AdminLandingHome = () => {
     };
 
     const handleStartQuiz = (quizId) => {
-        socket.emit('initiateQuiz', quizId)
         navigate(`/start-quiz/${quizId}`)
     }
 
     useEffect(() => {
         fetchQuizzes();
     }, [activeTab]);
-
-
-    useEffect(() => {
-        if (!socket.connected) {
-            socket.connect();
-        }
-
-        return () => {
-            socket.disconnect();
-        };
-    }, []);
 
     return (
         <>

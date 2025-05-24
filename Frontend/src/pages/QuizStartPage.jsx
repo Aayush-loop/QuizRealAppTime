@@ -1,42 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import socket from '../utils/socket';
+import API from '../utils/API';
+import { AuthContext } from '../contexts/AuthContext';
+import { SocketContext } from '../contexts/SocketContext';
+
 
 const JoinViaUrl = () => {
     const [copied, setCopied] = useState(false);
+    const [code, setCode] = useState();
     const { quizId } = useParams();
-    const url = `/lobby/${quizId}`;
+    const [loading, setLoading] = useState(true);
+
+
+    const fetchJoinCode = async () => {
+        try {
+            const response = await API.get(`/quiz/${quizId}`);
+            if (response.status === 200) {
+                const { joinCode } = response.data.data;
+                //console.log("Join Code:", joinCode);
+                setCode(joinCode);
+            }
+
+        } catch (error) {
+            console.error("Error fetching join code:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(url);
+            await navigator.clipboard.writeText(code);
             setCopied(true);
-            toast.success('URL copied to clipboard!');
+            toast.success('code copied to clipboard!');
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             toast.error('Failed to copy!');
             console.error('Clipboard copy failed', err);
         }
     };
+    useEffect(() => {
+        fetchJoinCode();
+    }, []);
 
     return (
         <div className="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
             <h3 className="text-2xl dark:text-whitetext-base font-semibold text-gray-900 dark:text-white mb-5">
-                Share the Quiz Link
+                Share the Join Code
             </h3>
             <p className="font-normal text-gray-700 dark:text-gray-400">
-                Share this link with your participants to allow them to join the quiz.
+                Share this code with your participants to allow them to join the quiz.
             </p>
             <div className="flex gap-2 w-full mt-3">
                 <div className="w-2/3">
                     <div className="relative">
-                        <label htmlFor="meeting-url" className="sr-only">Meeting URL</label>
+                        <label htmlFor="meeting-code" className="sr-only">Meeting code</label>
                         <input
-                            id="meeting-url"
+                            id="meeting-code"
                             type="text"
                             className="bg-gray-50 border border-gray-300 text-gray-800 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                            value={url}
+                            value={code}
                             disabled
                             readOnly
                         />
@@ -60,28 +85,41 @@ const QuizStartPage = () => {
     const { quizId } = useParams();
     const navigate = useNavigate();
     const [participants, setParticipants] = useState([]);
+    const socket = useContext(SocketContext);
+    const user = useContext(AuthContext).user;
+    if (socket) {
+        console.log("Socket is connected");
+    }
 
+    // useEffect(() => {
+    //     socket.on('studentListUpdated', (data) => {
+    //         console.log("studentListUpdated data:");
+    //         console.log("Updated student list:", data);
+    //         setParticipants(data);
+    //     });
+    //     return () => {
+    //         socket.off('studentListUpdated');
+    //     };
+    // }, []);
 
     useEffect(() => {
-        if (!socket.connected) {
-            socket.connect();
-        }
-
-        return () => {
-            socket.disconnect();
-        };
-    }, []);
+        socket.emit("joinQuiz", {
+            ...user,
+            quizId: quizId
+        })
+    }, [user, quizId]);
 
     useEffect(() => {
-        socket.on('studentListUpdated', (data) => {
-            console.log("Updated student list:", data);
-            setParticipants(data);
+        socket.on('studentListUpdated', (participants) => {
+            console.log("Student list updated:", participants);
+            setParticipants(participants);
         });
-        // Clean up listener
+
         return () => {
             socket.off('studentListUpdated');
         };
-    }, []);
+    }, [quizId]);
+
 
 
 
@@ -141,7 +179,7 @@ const QuizStartPage = () => {
                                             participants.map((participant) => {
                                                 return (
                                                     <>
-                                                        <li className="py-3 sm:py-4">
+                                                        <li key={participant._id} className="py-3 sm:py-4">
                                                             <div className="flex items-center">
                                                                 <div className="shrink-0">
                                                                     <img className="w-8 h-8 rounded-full" src={participant.image || "/images/avatar.jpg"} alt="Neil image" />

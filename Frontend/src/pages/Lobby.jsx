@@ -1,7 +1,7 @@
 import React, { useEffect, useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import socket from '../utils/socket';
+import { SocketContext } from '../contexts/SocketContext';
 
 
 const quizRules = [
@@ -18,6 +18,8 @@ const Lobby = () => {
     const navigate = useNavigate();
     const { quizId } = useParams();
     const user = useContext(AuthContext).user;
+    const socket = useContext(SocketContext);
+
     useEffect(() => {
         socket.on("startQuiz", (data) => {
             console.log(data);
@@ -37,14 +39,19 @@ const Lobby = () => {
     }, [user, quizId]);
 
     useEffect(() => {
-        if (!socket.connected) {
-            socket.connect();
-        }
+
+        socket.on('studentListUpdated', (data) => {
+            console.log("Student List Updated", data);
+
+        });
 
         return () => {
-            socket.disconnect();
+            socket.off('studentListUpdated');
         };
-    }, []);
+    }, [quizId]);
+
+
+
 
     return (
         <>

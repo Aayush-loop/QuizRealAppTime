@@ -220,6 +220,31 @@ const updateQuiz = async (req, res) => {
     }
 }
 
+const getQuizByJoinCode = async (req, res) => {
+
+    try {
+        const { joinCode } = req.params;
+
+
+        if (!joinCode) {
+            throw new apiError(400, "Join code is required");
+        }
+
+        const quiz = await Quiz.findOne({ joinCode }).select('-questions -__v');
+        if (!quiz) {
+            throw new apiError(404, "Quiz not found");
+        }
+        res.status(200).json(new apiResponse(200, "Quiz fetched successfully", quiz));
+
+    } catch (error) {
+        console.error("Error fetching quiz by join code:", error);
+        res.status(500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+
+    }
+}
 
 module.exports = {
     addQuiz,
@@ -228,4 +253,5 @@ module.exports = {
     getQuestion,
     getQuizzes,
     updateQuiz,
+    getQuizByJoinCode
 }

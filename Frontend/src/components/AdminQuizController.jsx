@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Bookmark } from 'lucide-react'
 import API from '../utils/API';
 import Loading from './Loading';
 import { useParams, useNavigate } from 'react-router-dom';
 import ModalHandler from '../utils/Modalhandler';
-import socket from '../utils/socket';
+import { SocketContext } from '../contexts/SocketContext';
 
 const AdminQuizController = () => {
     const navigate = useNavigate();
+    const socket = useContext(SocketContext);
 
     const quizId = useParams().quizId;
     const [question, setQuestion] = useState(null);
@@ -58,15 +59,6 @@ const AdminQuizController = () => {
         }
     };
 
-    useEffect(() => {
-        if (!socket.connected) {
-            socket.connect();
-        }
-
-        return () => {
-            socket.disconnect();
-        };
-    }, []);
 
     useEffect(() => {
         fetchAndBroadcastQuestion(questionIndex);

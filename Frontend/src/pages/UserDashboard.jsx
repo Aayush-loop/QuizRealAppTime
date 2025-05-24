@@ -13,7 +13,7 @@ const UserDashboard = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const { loading, user } = useContext(AuthContext);
 
-    console.log(user);
+    // console.log(user);
 
     if (loading || !user) {
         return <Loading />
