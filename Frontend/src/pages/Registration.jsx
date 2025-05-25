@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import API from "../utils/API"
+import Loading from '../components/Loading'
 
 
 const Registration = () => {
@@ -15,6 +16,7 @@ const Registration = () => {
         password: null,
         role: null,
     })
+    const [loading, setLoading] = useState(false)
 
     const handleChange = (e) => {
         setRegisterData({
@@ -26,24 +28,28 @@ const Registration = () => {
 
     const handleSubmit = async (e) => {
         try {
+            setLoading(true)
             e.preventDefault();
             const response = await API.post('/auth/register', registerdata);
             // console.log(response)
             if (response.status === 201) {
+                console.log(response.data)
                 toast.success(response.data.message)
-                navigate('/login')
+                navigate('/otp-verification')
             } else {
                 toast.error(response.data.message)
             }
         } catch (error) {
             console.log(error)
             toast.error(error.response.data.message)
+        } finally {
+            setLoading(false)
         }
     }
 
     return (
         <>
-            <section className="bg-gray-50 dark:bg-gray-900">
+            {loading ? <Loading /> : <section className="bg-gray-50 dark:bg-gray-900">
                 <div className="flex items-center gap-10  justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
                     <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
                         <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
@@ -100,8 +106,7 @@ const Registration = () => {
                     </div>
 
                 </div>
-            </section>
-
+            </section>}
         </>
     )
 }

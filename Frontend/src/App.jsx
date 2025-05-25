@@ -15,6 +15,7 @@ import Lobby from './pages/Lobby'
 import ProtectedRoute from './utils/ProtectedRoute'
 import { Flowbite } from "flowbite-react";
 import { SocketProvider } from './contexts/SocketContext';
+import OTPVerification from './pages/OTPVerification'
 
 const App = () => {
   return (
@@ -47,6 +48,8 @@ const App = () => {
                 <Route path='/admin-quiz-controller/:quizId' element={<AdminQuizController />} />
                 <Route path='/start-quiz/:quizId' element={<QuizStartPage />} />
                 <Route path='/lobby/:quizId' element={<Lobby />} />
+                <Route path='/otp-verification' element={<OTPVerification />} />
+
               </Routes>
             </Flowbite>
             <ToastContainer />

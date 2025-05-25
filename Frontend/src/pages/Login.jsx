@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import API from "../utils/API"
 import { AuthContext } from '../contexts/AuthContext'
+import Loading from '../components/Loading'
 
 const Login = () => {
     const navigate = useNavigate()
@@ -12,49 +13,58 @@ const Login = () => {
         email: null,
         password: null,
     })
+    const [loading, setLoading] = useState(false)
 
     const handleChange = (e) => {
         setLoginData({
             ...logindata,
             [e.target.name]: e.target.value
         })
-        // console.log(logindata)
+
     }
-
     const handleSubmit = async (e) => {
+        setLoading(true);
+        e.preventDefault();
         try {
-            e.preventDefault();
             const response = await API.post('/auth/login', logindata, { withCredentials: true });
-            if (response.status === 200) {
 
-                toast.success(response.data.message);
-                setIsAuthenticated(true)
-                setUser(response.data.data)
-                if (response.data.data.role === "student") {
-                    navigate('/dashboard');
-                }
-                else {
-                    navigate('/admin')
-                }
+            toast.success(response.data.message);
+            setIsAuthenticated(true);
+            setUser(response.data.data);
+
+            if (response.data.data.role === "student") {
+                navigate('/dashboard');
             } else {
-                toast.error(response.data.message);
+                navigate('/admin');
             }
+
         } catch (error) {
-            console.log(error);
-            toast.error(error.response?.data?.message || "An error occurred");
+            const status = error.response?.status;
+            const message = error.response?.data?.message || "An error occurred";
+
+            if (status === 403 && message.includes("verify")) {
+                toast.warning(message);
+                navigate('/otp-verification', { state: { email: logindata.email } });
+            } else {
+                toast.error(message);
+            }
+
+            console.error("Login error:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
+
     return (
         <>
-            <section className="bg-gray-50 dark:bg-gray-900">
+            {loading ? <Loading /> : <section className="bg-gray-50 dark:bg-gray-900">
                 <div className="flex items-center gap-10  justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
                     <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
                         <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
                             <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                                 Login here
                             </h1>
-
 
                             <div className="p-4 md:p-5">
                                 <form className="space-y-4" method='post' onSubmit={handleSubmit}>
@@ -85,7 +95,7 @@ const Login = () => {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section>}
         </>
     )
 }
